@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Happy Birthday Maryam</title>
+    <script src="http://codeorigin.jquery.com/jquery-2.0.3.min.js"></script>
+    <style>
+      body {
+        font-family: verdana;
+      }
+      canvas {
+        border: 1px solid black;
+        margin: 0px auto;
+      }
+    </style>
+    <script>
+      window.requestAnimFrame = (function(){
+        return window.requestAnimationFrame       ||
+               window.webkitRequestAnimationFrame ||
+               window.mozRequestAnimationFrame    ||
+               function(callback) {
+                 window.setTimeout(callback, 1000 / 60);
+               }
+      })()
+
+      var header = null // jquery selector for header
+      var canvas = null
+      var ctxt   = null
+      var tick   = 0
+      var imgs   = {}
+      var GRAVITY = -0.1
+
+      function rand(min, max) {
+        return Math.floor(Math.random() * (max - min + 1) + min)
+      }
+
+      function loadImages() {
+        var img = new Image
+        img.src = 'kitten1.png'
+        imgs['kitten1.png'] = img
+      }
+
+      function Projectile(angle, img) {
+        this.x = Math.cos(angle) * 100
+        this.y = Math.sin(angle) * 100
+
+        var speedFactor = rand(12, 16)
+        this.xv = this.x / speedFactor
+        this.yv = this.y / speedFactor
+
+        this.img = imgs[img]
+        this.width = 70
+        this.height = this.width * this.img.height / this.img.width
+      }
+      Projectile.prototype.update = function() {
+        this.x += this.xv
+        this.y += this.yv
+        this.yv += GRAVITY
+      }
+      Projectile.prototype.paint = function() {
+        ctxt.drawImage(this.img,
+                       this.x - this.width / 2,
+                       canvas.height - this.y - this.height / 2,
+                       this.width,
+                       this.height)
+      }
+
+      function Cannon() {
+        this.height    = 20
+        this.width     = 100
+        this.direction = Math.PI / 180
+        this.color     = 'black'
+        this.angle     = 0
+      }
+      Cannon.prototype.update = function() {
+        if (! (tick % 10))
+          return
+
+        this.angle += this.direction
+        if (this.angle <= 0)
+          this.direction = Math.PI / 180
+        else if (this.angle >= Math.PI / 2)
+          this.direction = -Math.PI / 180
+
+        if (Math.random() < 0.07) {
+          this.color = this.color === 'black' ? 'red' : 'black'
+          var newProj = new Projectile(this.angle, 'kitten1.png')
+          objs.push(newProj)
+        }
+      }
+      Cannon.prototype.paint = function() {
+        ctxt.translate(0, canvas.height)
+        ctxt.rotate(-this.angle)
+
+        ctxt.fillStyle = this.color
+        ctxt.fillRect(0,
+                      -this.height / 2,
+                      this.width,
+                      this.height)
+
+        ctxt.rotate(this.angle)
+        ctxt.translate(0, -canvas.height)
+      }
+
+      var objs = []
+
+      function render() {
+        var col = 'rgb(' + rand(0, 200) + ',' + rand(0, 200) +
+                           ',' + rand(0, 200) + ')'
+        header.css('color', col)
+
+        ctxt.clearRect(0, 0, canvas.width, canvas.height)
+        ++tick
+        objs.forEach(function(obj) { obj.update() })
+        objs.forEach(function(obj) { obj.paint() })
+      }
+
+      $(window).ready(function() {
+        header = $('h1')
+        loadImages()
+        objs.push(new Cannon());
+        canvas = $('canvas')[0]
+        ctxt = canvas.getContext('2d')
+
+        ; (function animloop(){
+          requestAnimFrame(animloop)
+          render()
+        })()
+      })
+    </script>
+  </head>
+  <body>
+    <h1>Happy Birthday Maryam</h1>
+    <canvas id=shoot width=800 height=500>
+    </canvas>
+    <h1>Love James xxxx</h1>
+  </body>
+</html>
