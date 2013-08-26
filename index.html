@@ -29,7 +29,7 @@
       var imgs   = {}
       var GRAVITY = -0.1
 
-      function rand(min, max) {
+      function randInt(min, max) {
         return Math.floor(Math.random() * (max - min + 1) + min)
       }
 
@@ -42,10 +42,12 @@
       function Projectile(angle, img) {
         this.x = Math.cos(angle) * 100
         this.y = Math.sin(angle) * 100
+        this.angle = 0
 
-        var speedFactor = rand(12, 16)
+        var speedFactor = randInt(12, 16)
         this.xv = this.x / speedFactor
         this.yv = this.y / speedFactor
+        this.av = Math.random() * 0.10 - 0.05
 
         this.img = imgs[img]
         this.width = 70
@@ -54,12 +56,22 @@
       Projectile.prototype.update = function() {
         this.x += this.xv
         this.y += this.yv
+
+        if ((this.x - this.width / 2) > canvas.width ||
+            (this.y + this.height / 2) < 0)
+          return true
+
+        this.angle += this.av
         this.yv += GRAVITY
       }
       Projectile.prototype.paint = function() {
+        ctxt.translate(this.x,
+                       canvas.height - this.y)
+        ctxt.rotate(this.angle)
+
         ctxt.drawImage(this.img,
-                       this.x - this.width / 2,
-                       canvas.height - this.y - this.height / 2,
+                       -this.width / 2,
+                       -this.height / 2,
                        this.width,
                        this.height)
       }
@@ -96,22 +108,28 @@
                       -this.height / 2,
                       this.width,
                       this.height)
-
-        ctxt.rotate(this.angle)
-        ctxt.translate(0, -canvas.height)
       }
 
       var objs = []
 
       function render() {
-        var col = 'rgb(' + rand(0, 200) + ',' + rand(0, 200) +
-                           ',' + rand(0, 200) + ')'
+        var col = 'rgb(' + randInt(0, 200) + ',' + randInt(0, 200) +
+                           ',' + randInt(0, 200) + ')'
         header.css('color', col)
 
         ctxt.clearRect(0, 0, canvas.width, canvas.height)
         ++tick
-        objs.forEach(function(obj) { obj.update() })
-        objs.forEach(function(obj) { obj.paint() })
+        for (var i = 0; i < objs.length; ) {
+          if (objs[i].update() === true)
+            objs.splice(i, 1)
+          else
+            ++i
+        }
+
+        objs.forEach(function(obj) {
+          obj.paint()
+          ctxt.setTransform(1, 0, 0, 1, 0, 0)
+        })
       }
 
       $(window).ready(function() {
